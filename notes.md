@@ -116,3 +116,86 @@ allowing for commonly using conifgurations to be tweaked and easily rolled out a
 - Split per configuration target
 - Split parts per purpose
 
+# Chapter 2 - Styling
+
+To load css you need to use css-loader and style-loader.
+
+[https://www.npmjs.com/package/css-loader](css-loader) foies though possible @import and url() lookups 
+within matched files. External resources are skipped.
+
+[https://www.npmjs.com/package/style-loader](style-loader) injects the styling through a style element. The way it does this can be customised.
+
+Matched files can nbe processed through loaders such as:
+- [https://www.npmjs.com/package/file-loader](file-loader) and,
+- [https://www.npmjs.com/package/url-loader](url-loader)
+
+The [https://www.npmjs.com/package/mini-css-extract-plugin](MiniCssExtractPlugin) can be used to generate a separate CSS
+file.
+
+Files are evaluated from right to left, therefore,
+["style-loader", "css-loader"] is like styleLoader(cssLoader(input))
+
+css-loader doesn't touch absolute imports, although 
+webpack-dev-server and [https://www.npmjs.com/package/copy-webpack-plugin](copy-webpack-plugin) can help copy files
+outside of webpack.
+
+Using a Tilde character ~ tells webpack that an  import isn't 
+relative and then by default it will check node_modules for 
+the import. This can be configured with the "resolve.modules" 
+field.
+
+Although it is possible to refer to styling through javascript and is recommended, it is also possible to achieve the same result through an entry and globbing files.
+
+e.g.
+
+```javascript
+...
+const glob = require('glob');
+
+...
+
+const commonConfig = merge([
+  {
+    entry: {
+      ...
+      style: glob.sync("./src/**/*.css"),
+    },
+    ...
+  },
+  ...
+]);
+```
+
+With globbing you no longer get CSS Modules, and you have to be careful with ordering as well. To have strict control over ordering, it is recommended to set up single CSS entry and use
+@import to bring in rest of project in order.
+
+### Eliminating Unused CSS
+
+[https://www.npmjs.com/package/purifycss](PurifyCSS) is a tool that can achieve this through analyzing files. Not perfect but works with SPAs to an extent.
+
+[https://www.npmjs.com/package/uncss](uncss) fires up phantom and traverses your app to identify css.
+
+Purify supports additional options such as minification and whitelisting of required styles.
+
+### Critical Path Rendering
+
+- [https://developers.google.com/web/fundamentals/performance/critical-rendering-path/](critical-path-rendering) seems to optimize for render order and emphasizes above-the-fold css.
+
+Other include:
+- [https://www.npmjs.com/package/webpack-critical](webpack-critical)
+- [https://www.npmjs.com/package/html-critical-webpack-plugin](html-critical-webpack-plugin)
+- [https://www.npmjs.com/package/isomorphic-style-loader](isomorphic-style-loader)
+
+This lists other critical tools that are available, [https://github.com/addyosmani/critical-path-css-tools](critical-path-css-tools)
+
+### Autoprefixing
+
+Autoprefix can be used to add necessary prefixes to different 
+css properties in order to allow you to support different browsers. Autoprefixc 
+
+Browsers to support can be configured using a [https://www.npmjs.com/package/browserslist](.browserslistrc) file.
+
+Linting of CSS can be set up using the postcss-loader from [http://stylelint.io/](stylelint).
+
+# CHAPTER 3 - LOADING ASSETS
+
