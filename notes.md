@@ -432,3 +432,70 @@ to load .jpg and .png files while inlining below 25kb you would have to set up a
 
 # !!Be careful not to use multiple loaders on the images.
 
+## Loading SVGs
+
+Easiest way is through file-loader.
+
+You can refer to them through url() values.
+
+following loaders are also applicable:
+[https://www.npmjs.com/package/raw-loader](raw-loader)
+[https://www.npmjs.com/package/svg-inline-loader](svg-inline-loader)
+[https://www.npmjs.com/package/svg-sprite-loader](svg-sprite-loader)
+[https://www.npmjs.com/package/svg-url-loader](svg-url-loader)
+[https://www.npmjs.com/package/react-svg-loader](react-svg-loader)
+
+## Optimizing Images
+
+These types of loaders should be used first (last entry in use listing).
+
+For images:
+- [https://www.npmjs.com/package/image-webpack-loader](image-webpack-loader)
+- [https://www.npmjs.com/package/imagemin-webpack-plugin](imagemin-webpack-plugin)
+Svg Specific:
+- [https://www.npmjs.com/package/svgo-loader](svgo-loader)
+
+
+## Utilizing srcset
+
+These loaders allows you to generate srcet compatible collections of images for modern browsers
+This gives more control to the browser as to which images to load and when for better perf.
+
+## Loading Images Dynamically
+
+Allows you to load images based on a condition. See Code-splitting and dynamic loading chapter.
+
+## Loading Sprites
+
+Spriting allows you to package multiple images into a single file (less requests).
+- [https://www.npmjs.com/package/webpack-spritesmith](webpack-spritesmith)
+
+## Using Placeholders
+
+[https://www.npmjs.com/package/image-trace-loader](image-trace-loader) loads images and exposes the results as image/svg+xml URL encoded data.
+It can be used in conjunction with file-loader and url-loader for showing a placeholder
+while the image is being loaded.
+
+[https://www.npmjs.com/package/lqip-loader](lqip-loader) is similar but provides a blurred image instead.
+
+## Getting image dimensions
+
+Sometimes getting only the reference isn't enough. [https://www.npmjs.com/package/image-size-loader](image-size-loader) 
+emits image dimensions, type and size in addition to a reference to the image itself.
+
+## Referencing Images
+
+Webpack can pick images from stylesheets in @import and url() statements. You can also
+reference images directly in your JS files
+
+```javascript
+import src from "./avatar.png";
+
+const Profile = () => <img src={src} />;
+```
+the [https://www.npmjs.com/package/babel-plugin-transform-react-jsx-img-import](babel-plugin-transform-react-jsx-img-import)
+can generate the require automatically. so above becomes
+
+```javascript
+const Profile = () 
+```
