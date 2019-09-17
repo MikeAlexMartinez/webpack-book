@@ -605,3 +605,59 @@ build directory or connect them using a CDN.
 [https://www.npmjs.com/package/iconfont-webpack-plugin](iconfont-webpack-plugin) simplifies loading icon based fonts. It
 inlines SVG references within CSS files.
 
+## Loading Javascript
+
+Webpack process ES2015 module definitions by default, and transforms
+them into code.
+
+By running code through Babel, it allows you to ue ES2015 features
+and more.
+
+### Using Babel with Webpack Configuration
+
+During development on a modern browser it isn't necessary to run 
+code through Babel if you develop on a modern browser but is most
+likely a necessity when you build for production. the [https://www.npmjs.com/package/babel-loader](babel-loader) can use your 
+existing babel configuration or can be defined in the loader itself.
+[https://www.npmjs.com/package/babel-webpack-plugin](babel-webpack-plugin) is another option.
+
+### Setting up babel-loader
+
+@babel/preset-env allows you to polyfill certain language features 
+for older browsers. You should enable it's useBuiltIns options and install @babel/polyfill. You have to install it in your project 
+either through an entry or in your project.
+
+[https://babeljs.io/docs/usage/polyfill/](@babel/polyfill) pollutes the global scope with objects like promise.
+Therfore it may be useful to add [https://babeljs.io/docs/plugins/transform-runtime/](@babel/plugin-transform-runtime).
+
+Certain features such as Code Splitting write Promise based code
+to webpack's bootstrap after webpack has processed loaders. The 
+problem can be applied by applying a shim before the application
+code has executed. 
+
+### Babel Tips
+
+There are other babel tips. It's a good idea to add specific experimental features with specified presets. It's better
+to document features that are being used well.
+
+[https://buble.surge.sh/](Buble) is another compiler worth checking out.
+
+### Useful Babel Plugins
+
+- [https://www.npmjs.com/package/babel-plugin-import](babel-plugin-import) allows you not to point to exact path of file
+- [https://www.npmjs.com/package/babel-plugin-import-asserts](babel-plugin-import-asserts) asserts that imports have been defined
+- [https://www.npmjs.com/package/babel-plugin-jsdoc-to-assert](babel-plugin-jsdoc-to-assert) converts jsdoc annotations to runnable assertions
+- [https://www.npmjs.com/package/babel-plugin-log-deprecated](babel-plugin-log-deprecated) adds console.warn to functions that have @deprecate annotation in their comment
+- [https://www.npmjs.com/package/babel-plugin-annotate-console-log](babel-plugin-annotate-console-log) annotates console.log statements with invocation context,
+so it's easier to see where they are logged.
+- [https://www.npmjs.com/package/babel-plugin-sitrep](babel-plugin-sitrep) logs all assignments of a function and prints them.
+- [https://www.npmjs.com/package/babel-plugin-webpack-loaders](babel-plugin-webpack-loaders) allows you to use some webpack loaders through babel.
+- [https://www.npmjs.com/package/babel-plugin-syntax-trailing-function-commas](babel-plugin-syntax-trailing-function-commas) adds trailing comma support for functions.
+- [https://www.npmjs.com/package/babel-plugin-transform-react-remove-prop-types](babel-plugin-transform-react-remove-prop-types) allows you to remove propType related code from your production build. 
+
+### Enabling Presets and Plugins per environment
+
+env checks both NODE_ENV and BABEL_ENV and adds functionality to your build based
+on that. If BABEL_ENV is set it overrides NODE_ENV
+
+It's possible to pass webpack env variable to babel with a tweak.

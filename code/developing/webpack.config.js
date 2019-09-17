@@ -17,6 +17,7 @@ const commonConfig = merge([
       }),
     ],
   },
+  parts.loadJavascript({ include: PATHS.app }),
 ]);
 
 const productionConfig = merge([
@@ -49,6 +50,9 @@ const developmentConfig = merge([
 ]);
 
 module.exports = mode => {
+  // pass mode into babel configuration
+  process.env.BABEL_ENV = mode;
+
   if (mode === 'production') {
     return merge(commonConfig, productionConfig, { mode });
   }
