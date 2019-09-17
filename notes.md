@@ -397,7 +397,7 @@ Webpack an inline assets using the [https://www.npmjs.com/package/url-loader](ur
 [https://www.npmjs.com/package/file-loader](file-loader) outputs image files and returns paths to them instead of inlining. This technique
 works with other asset types.
 
-## Setting Up url-loader.
+### Setting Up url-loader.
 
 url-loader is a good starting point for develpment purposes. It comes with a limit option that can defer to file-loader beyond a certain point.
 
@@ -416,7 +416,7 @@ to load .jpg and .png files while inlining below 25kb you would have to set up a
 }
 ```
 
-## Setting up file-loader
+### Setting up file-loader
 
 ```javascript
 {
@@ -432,7 +432,7 @@ to load .jpg and .png files while inlining below 25kb you would have to set up a
 
 # !!Be careful not to use multiple loaders on the images.
 
-## Loading SVGs
+### Loading SVGs
 
 Easiest way is through file-loader.
 
@@ -445,7 +445,7 @@ following loaders are also applicable:
 [https://www.npmjs.com/package/svg-url-loader](svg-url-loader)
 [https://www.npmjs.com/package/react-svg-loader](react-svg-loader)
 
-## Optimizing Images
+### Optimizing Images
 
 These types of loaders should be used first (last entry in use listing).
 
@@ -456,7 +456,7 @@ Svg Specific:
 - [https://www.npmjs.com/package/svgo-loader](svgo-loader)
 
 
-## Utilizing srcset
+##/3 Utilizing srcset
 
 These loaders allows you to generate srcet compatible collections of images for modern browsers
 This gives more control to the browser as to which images to load and when for better perf.
@@ -465,12 +465,12 @@ This gives more control to the browser as to which images to load and when for b
 
 Allows you to load images based on a condition. See Code-splitting and dynamic loading chapter.
 
-## Loading Sprites
+### Loading Sprites
 
 Spriting allows you to package multiple images into a single file (less requests).
 - [https://www.npmjs.com/package/webpack-spritesmith](webpack-spritesmith)
 
-## Using Placeholders
+### Using Placeholders
 
 [https://www.npmjs.com/package/image-trace-loader](image-trace-loader) loads images and exposes the results as image/svg+xml URL encoded data.
 It can be used in conjunction with file-loader and url-loader for showing a placeholder
@@ -478,12 +478,12 @@ while the image is being loaded.
 
 [https://www.npmjs.com/package/lqip-loader](lqip-loader) is similar but provides a blurred image instead.
 
-## Getting image dimensions
+### Getting image dimensions
 
 Sometimes getting only the reference isn't enough. [https://www.npmjs.com/package/image-size-loader](image-size-loader) 
 emits image dimensions, type and size in addition to a reference to the image itself.
 
-## Referencing Images
+### Referencing Images
 
 Webpack can pick images from stylesheets in @import and url() statements. You can also
 reference images directly in your JS files
@@ -497,5 +497,111 @@ the [https://www.npmjs.com/package/babel-plugin-transform-react-jsx-img-import](
 can generate the require automatically. so above becomes
 
 ```javascript
-const Profile = () 
+const Profile = () => <img src="avator.png">;
 ```
+
+You can also set up dynamic imports as discussed in the Code 
+Splitting Chapter.
+
+```javascript
+const src = require(`./avatars/${avatar}`)
+```
+
+### Images and css-loader gotcha
+
+If you are using images and css-loader with the sourceMap option
+enabled, it's important that you set output.pubicPath to an absolute
+value pointing to the development server.
+
+## Loading Fonts
+
+Loading fonts involves deciding which browsers will require a
+'first-class' service and which can fall back to the system fonts.
+
+Font test patterns tend to be more complicated than other formats.
+
+[https://www.npmjs.com/package/canifont](canifont) can be used to figure out which browsers to support.
+
+### Choosing One Format
+
+All browsers support the .woff format, it's newer version is .woff2,
+and is widely supported by most modern browsers.
+
+```javascript
+const config = {
+  // Match woff2 in addition to patterns like .woff?v=1.1.1
+  test: /\.(woff|woff2)(\?v=\d+\.\d+$/)/,
+  use: {
+    loader: "url-loader",
+    options: {
+      // Limit at 50k. Above that it emits separate files
+      limit: 50000,
+
+      // url-loader set mimetype if it's passed.
+      // without this it derives it from the file extension
+      mimetype: "application/font-woff",
+
+      // Output below fonts directory
+      name: "./fonts/[name].[ext]",
+    },
+  },
+};
+```
+
+### Supporting Multiple Formats
+
+You can support multiple formats and by adjusting the test 
+statement. You will need to ensure that you order your @font-face
+definition carefully so that newer formats are read first. e.g.
+
+```css
+@font-face {
+  font-family: "myfontfamily";
+  src: url("./fonts/myfontfile.woff2") format("woff2"),
+    url("./fonts/myfontfile.woff") format("woff"),
+    url("./fonts/myfontfile.eot") format("embedded-opentype"),
+    url("./fonts/myfontfile.ttf") format("ttf");
+    /* Add other formats as you see fit */
+}
+```
+
+### Manipulating file-loader Output Path and publicPath
+
+file-loader allows the shaping of output, so you can output fonts
+below fonts/ and images below images/ for example.
+
+Furthermore, it's possible to manipulate publicPath and override 
+the default per loader definition. e.g.
+
+```javascript
+const config = {
+  // Match woff2 and patterns like .woff?v.1.1.1
+  test: /\.woff2?(\d+\.\d+\.\d+)?$/,
+  use: {
+    loader: "url-loader",
+    options: {
+      limit: 50000,
+      mimetype: "application/font-woff",
+      name: "./fonts/[name].[ext]", // Output below ./fonts
+      publicPath: "../", // Take the directory into account
+    },
+  },
+},
+```
+
+### Generating Font Files Based on SVGs
+
+If you prefer to use SVG based fonts, they can be bundled as a 
+single font file by using [https://www.npmjs.com/package/webfonts-loader](webfonts-loader). Be careful not to let it interfere
+with any other SVG loading you have in place.
+
+### Using Google Fonts
+
+the [https://www.npmjs.com/package/google-fonts-webpack-plugin](google-fonts-webpack-plugin) can download google fonts to webpacks
+build directory or connect them using a CDN.
+
+### Using Icon Fonts
+
+[https://www.npmjs.com/package/iconfont-webpack-plugin](iconfont-webpack-plugin) simplifies loading icon based fonts. It
+inlines SVG references within CSS files.
+
