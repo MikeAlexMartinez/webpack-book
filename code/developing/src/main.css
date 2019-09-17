@@ -2,6 +2,14 @@ body {
   background: red;
 }
 
+.image {
+  height: 186px;
+  width: 124px;
+  background-image: url("./son.jpg");
+  background-repeat: no-repeat;
+  background-position: center;
+}
+
 .pure-button {
   -webkit-border-radius: 1em;
   border-radius: 1em;

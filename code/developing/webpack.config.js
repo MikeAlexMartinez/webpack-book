@@ -27,6 +27,14 @@ const productionConfig = merge([
   parts.purifyCSS({
     paths: glob.sync(`${PATHS.app}/**/*.js`, { nodir: true }),
   }),
+  // inline small images, but fallback to file-loader when
+  // limit exceeded
+  parts.loadImages({
+    options: {
+      limit: 5000,
+      name: "[name].[ext]"
+    }
+  }),
 ]);
 
 const developmentConfig = merge([
@@ -36,6 +44,8 @@ const developmentConfig = merge([
   }),
   // only inline css during development
   parts.loadCSS(),
+  // inline images during development
+  parts.loadImages(),
 ]);
 
 module.exports = mode => {

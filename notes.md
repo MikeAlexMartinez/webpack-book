@@ -199,3 +199,236 @@ Linting of CSS can be set up using the postcss-loader from [http://stylelint.io/
 
 # CHAPTER 3 - LOADING ASSETS
 
+## Loader Definitions
+
+Multiple ways to use loaders. Preferable to use absolute paths here as they allow you to move config without breaking assumptions.
+
+Assuming you set an include or exclude rules, packages loaded from node_modules work as the assumption is that they have been compiled in such 
+a way that they work out of the box. If this isn't the case, you will need to apply skills learned in the consuming packages chapter.
+
+e.g.
+
+```javascript
+
+module.exports = {
+  ...
+  module: {
+    rules: [
+      {
+        // ** Conditions ** to match files using RegExp, function
+        test: /\.js$/,
+
+        // ** Restrictions **
+        // Restrict matching to a directory. This
+        // also accepts an array of paths or a function.
+        // the same applies to exclude
+        include: path.join(__dirname, "app"),
+        exclude(path) {
+          // you can perform more complex checks as well
+          return path.match(/node_modules/);
+        },
+
+        // **Actions** to apply loaders to the matched files
+      }
+    ]
+  }
+}
+
+```
+
+Loaders always evaluate loaders from right to left:
+
+```javascript
+{
+  test: /\.css$/,
+  use: ["style-loader", "css-loader"],
+},
+```
+
+The above can be split it while also being equivalent:
+
+
+```javascript
+{
+  test: /\.css$/,
+  use: "style-loader",
+},
+{
+  test: /\.css$/,
+  use: "css-loader",
+},
+```
+
+The enforce rule for loaders can force loaders to be used pre or post other package. e.g.
+pre:
+- linting
+- tests
+post:
+- build analysis
+
+If you want to use more than one loader, you can pass more than one loader to use and expand from there:
+
+```javascript
+{
+  test: /\.js$/,
+  include: PATHS.app,
+  use: [ {
+      loader: "babel-loader",
+      options: {
+        presets: ["env"],
+      },
+    },
+    // Add more loaders here
+  ],
+}
+```
+
+### Branching at the use function
+
+It's also possible to branch at 'use' as webpacks loader definitions accept functions, e.g.
+
+```javascript
+{
+  test: /\.css$/,
+
+  // `resource` refers t the resource path matched.
+  // `resourceQuery` contains possible query passed to it
+  // `issuer` tells about the match context path
+  use: ({ resource, resourceQuery, issuer }) => {
+    // You have to return something falsy, object, or
+    // a string (i.e., "style-loader") form here.
+    //
+    // returning an array fails! Nest rules instead.
+    if (env === 'development') {
+      return {
+        use: {
+          loader: "css-loader", // css-loader first
+          rules: [
+            "style-loader", // style-loader after
+          ],
+        },
+      };
+    }
+  },
+}
+```
+
+It's possible to write loader definitions inline.
+
+### Loading Based on resourceQuery
+
+oneOf field makes it possible to route webpack to a specific loader based on a resource related match.
+
+```javascript
+{
+  test: /\.png$/,
+  oneOf: [
+    {
+      resourceQuery: /inline/,
+      use: "url-loader"
+    },
+    {
+      resourceQuery: /external/,
+      use: "file-loader"
+    },
+  ],
+},
+```
+
+### Loading based on issuer
+
+issuer can be user to control behaviour based on where a resource
+was imported.
+
+e.g. below style-loader is used when webpack captures a css file from
+a JS import.
+
+```javascript
+{
+  test: /\.css$/,
+  rules: [
+    {
+      issuer: /\.js$/,
+      use: "style-loader",
+    },
+    {
+      use: /css-loader/,
+    },
+  ],
+},
+```
+
+The prior example could also be written using a mix of issuer and not:
+
+```javascript
+{
+  test: /\.css$/,
+
+  rules: [
+    // CSS imported from other modules is added to the DOM
+    {
+      issuer: { not: /\.css$/ },
+      use: "style-loader",
+    },
+    // Apply css-loader against CSS imports to return CSS
+    {
+      use: "css-loader",
+    },
+  ],
+}
+```
+
+### Understanding Loader behaviour
+
+Loader behaviour can be understood in greater detail by inspecting them.
+[https://www.npmjs.com/package/loader-runner](loader-runner) allows you to run loaders
+in isolation without webpack.
+
+[https://www.npmjs.com/package/inspect-loader](inspect-loader) allows you to see what's being
+passed between loaders.
+
+## Loading Images
+
+Differences between HTTP/1 and HTTP/2 require different approaches to performance, Webpack allows
+preparation for different approaches.
+
+Webpack an inline assets using the [https://www.npmjs.com/package/url-loader](url-loader). It emits images as base64 strings within your bundles.
+
+[https://www.npmjs.com/package/file-loader](file-loader) outputs image files and returns paths to them instead of inlining. This technique
+works with other asset types.
+
+## Setting Up url-loader.
+
+url-loader is a good starting point for develpment purposes. It comes with a limit option that can defer to file-loader beyond a certain point.
+
+to load .jpg and .png files while inlining below 25kb you would have to set up a loader,
+
+```javascript
+{
+  test: /\.(jpg|png)$/,
+  use: {
+    loader: "url-loader",
+    options: {
+      limit: 25000,
+      fallback: "file-loader"
+    }
+  }
+}
+```
+
+## Setting up file-loader
+
+```javascript
+{
+  test: /\.(jpg|png)$/,
+  use: {
+    loader: "file-loader",
+    options: {
+      name: "[path][name].[hash].[ext]",
+    }
+  }
+}
+```
+
+# !!Be careful not to use multiple loaders on the images.
+
