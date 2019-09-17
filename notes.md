@@ -661,3 +661,47 @@ env checks both NODE_ENV and BABEL_ENV and adds functionality to your build base
 on that. If BABEL_ENV is set it overrides NODE_ENV
 
 It's possible to pass webpack env variable to babel with a tweak.
+
+### Setting up Typescript
+
+You can use Typescript with webpack using the following loaders:
+- [https://www.npmjs.com/package/ts-loader](ts-loader)
+- [https://www.npmjs.com/package/awesome-typescript-loader](awesome-typescript-loader)
+
+### Setting up Flow
+
+static analysis tool used by facebook.
+- [](flow-status-plugin)
+- [](babel-plugin-syntax-flow)
+- [](babel-plugin-typecheck)
+
+
+# Chapter 4 - Building
+
+
+## Sourcemaps
+
+Sourcemaps works for both Javscript and Styling files. 
+
+One approach is to disable source maps during development and use ES2015 without any
+extensions and develop using a modern browser. In Webpack 4, source maps work out
+of the box when you run it in development mode.
+
+Sourcemaps can be inline (handy during development) or separate which is better for prod.
+
+Hidden source maps give stack trace info only, and you can connect to a monitoring service.
+
+## Enabling Sourcemaps in Webpack
+
+See example code...
+
+To see sourcemaps you need to enable them in the browser as per the instructions.
+
+### There are different types of sourcemaps.
+
+- "eval" - lowest qual
+- "cheap-eval-source-map"
+- "cheap-module-eval-source-map"
+- "eval-source-map" - highest qual
+
+### Separate Source Map Types

@@ -21,6 +21,8 @@ const commonConfig = merge([
 ]);
 
 const productionConfig = merge([
+  // source-map is the slowest and highest quality option of them all.
+  parts.generateSourceMaps({ type: "source-map" }),
   parts.extractCSS({
     use: ["css-loader", parts.autoprefix()],
   }),

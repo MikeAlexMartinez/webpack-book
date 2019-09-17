@@ -74,6 +74,10 @@ exports.extractCSS = ({ include, exclude, use = [] }) => {
   };
 };
 
+exports.generateSourceMaps = ({ type }) => ({
+  devtool: type
+});
+
 exports.purifyCSS = ({ paths }) => ({
   plugins: [new PurifyCSSPlugin({ paths })]
 })
