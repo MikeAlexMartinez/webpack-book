@@ -10,7 +10,7 @@
   "env": {
     "development": {
       "plugins": [
-        "annotate-console.log"
+        "annotate-console-log"
       ]
     }
   }

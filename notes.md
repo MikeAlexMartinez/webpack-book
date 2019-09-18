@@ -699,9 +699,129 @@ To see sourcemaps you need to enable them in the browser as per the instructions
 
 ### There are different types of sourcemaps.
 
+Inline Source map types:
 - "eval" - lowest qual
 - "cheap-eval-source-map"
 - "cheap-module-eval-source-map"
 - "eval-source-map" - highest qual
 
-### Separate Source Map Types
+Separate Source Map Types:
+- "cheap-source-map" - misses column mappings
+- "cheap-module-source-map" - (potentially broken when minification is used)
+- "hidden-source-map" - doesn't write references to source maps in source files.
+- "nosources-source-map" - doesn't expose source code to client.
+- "source-map" - best quality (but slowest)
+
+### Other source map options
+
+```javascript
+const sourceMapEx = {
+  output: {
+    // Modify the name of the gnerated source map file
+    // You can use [file], [id], and [hash] replacements here.
+    // The default option is rnough for most use cases.
+    sourceMapFilename: '[file].map', // Default
+
+    // This is the source map filename template. It's default
+    // format depends on the devtool option used. You don't
+    // need to modify this often.
+    devtoolModuleFilenameTemplate: 'webpack:///[resource-path]?[loaders]',
+  }
+}
+```
+
+[](terser-webpack-plugin) can break sourcemaps if not configured correctly.
+
+### SourceMapDevToolPlugin
+
+This plugin allows more granular contorl over sourcemaps. Allows you to skip
+devtool option altogether.
+
+Webpack modules match only .js and .css file by default so using a more
+inclusive test pattern can get around this, e.g.
+
+```javascript
+/\.(js|jsx|css)($|\?)/i
+```
+
+### Dependency Source Maps
+
+You can use the [https://www.npmjs.com/package/source-map-loader](source-map-loader) to
+make webpack aware of them.
+
+### Sourcemaps for stylesheets
+
+You can enable the sourceMap options. css-loader is known to have issues with relative
+paths, so you should set output.publicPath to resolve the server url.
+
+## Bundle Splitting
+
+Bundle spltting can be achieved using "optimization.splitChunks.cacheGroups". When running
+in production mode, webpack 4 perform a series of splits out of the box.
+
+In order to invalidate bundles correctly you have to attach hashes to the generated bundles
+as discussed in the Adding Hashes to Filenames chapter.
+
+### The Idea of Bundle Splitting
+
+Quick win is to split vendor and application code into their own bundles.
+
+You can rely on automated splitting provided by webpack or you can customise and define it yourself.
+
+### Splitting and Merging Chunks
+
+Webpack provides more control over the generated chunks by two plugins:
+- AggressiveSplitting
+- AggressiveMergingPlugin
+
+Former allows you to emit more and smaller bundles. (handy with HTTP/2)
+
+basic idea of aggressive splitting:
+
+```javascript
+const aggressiveSplit = {
+  plugins: [
+    new webpack.optimize.AggressiveSplittingPlugin({
+      minSize: 10000,
+      maxSize: 30000,
+    })
+  ]
+}
+```
+
+It's a balancing act, as you lose some benefits of caching if you split into multiple 
+bundles and you can be overloaded with requests in HTTP/1 environments. This approach
+doesn't work with HtmlWebpackPlugin due to a bug in the plugin.
+
+Aggressive merging plugin goes the other way and combines small bundles into bigger ones.
+
+```javascript
+const aggressiveMerging = {
+  plugins: [
+    new AggressiveMergingPlugin({
+      minSizeReduce: 2,
+      moveToParents: true,
+    }),
+  ],
+};
+```
+
+Possible to get good caching with these pkugins if webpack records are used. 
+
+webpack.optimize contains:
+- LimitChunkCountPlugin
+- MiniChunkSizePlugin
+which give more control over chunk size.
+
+See [https://medium.com/webpack/webpack-http-2-7083ec3f3ce6](Tobias Koppers discussion for more detail)
+
+### Chunk Types in Webpack
+
+- Early Chunks: Entry chunks contain webpack runtime and modules it then loads.
+- Normal Chunks: Don't contain webpack runtime and can be loaded dynamically when webpack loads.
+- Initial Chunks: normal chunks that count towards the initial loading time of the application. You should
+  focuse on the other two.
+
+## Code Splitting
+
+
