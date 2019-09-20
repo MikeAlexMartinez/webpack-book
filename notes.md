@@ -824,4 +824,65 @@ See [https://medium.com/webpack/webpack-http-2-7083ec3f3ce6](Tobias Koppers disc
 
 ## Code Splitting
 
+Code splitting allows you to split bundles, and allows loading code lazily as you need it.
+
+You can load more code as a user enters different parts of the application. You can link loading to a specific
+action. You can use predictions to guess what a user is going to go next. It's possible to implement Google's [https://developers.google.com/web/fundamentals/performance/prpl-pattern/](PRPL)
+pattern using webpack's lazy loading. PRPL (Push, Render, Pre-cache, Lazy-load) has been designed with the mobile web in mind.
+
+Code splitting can be done in two primary ways in webpack: through dynamic import or require.ensure syntax. 
+
+Goal is to get a split point that is only loaded on demand. There can be splits inside splits (splinception)
+
+## Dynamic import
+
+The dynamic import syntax isn't in the official language specification yet. Minor tweaks are needed especially at the Babel setup for this reason.
+
+Dynamic imports are defined as promises.
+
+```javascript
+import(/* webpackChunkName: "optional-name" */ "./module").then(
+  module => {...}
+).catch(
+  error => {...}
+)
+```
+
+The optional name allows you to pull multiple splits points into a single bundle. As long as they have the same name, they will be grouped. Each split point
+generates a new bundle by default. 
+
+The interface allows composition, and you could load multiple resources in parallel:
+
+```javascript
+Promise.all([
+  import("lunr"),
+  import("../search_index.json")
+]).then((lunr, search) => {
+  return {
+    index: lunr.Index.load(search.index),
+    lines: search.lines,
+  };
+});
+```
+
+notes:
+- The syntax only works with JS after configuring it the right way.
+- There's an older syntax require.ensure and require.include
+- (https://github.com/webpack/webpack-pwa)[webpack-pwa] illustrates the idea on a larger scale.
+
+You can review the output of your build to check where split points are. Webpack wraps the blocks in a webpackJsonp block, and processes
+the code bit.
+
+- if you want to adjust the name of a chunk you can set ouput.chunkFilename. e.g. "chunk.[id].js" would prefix each spplit chunk with the
+word chunk.
+
+- [https://www.npmjs.com/package/bundle-loader](bundle-loader) gives similar results but through a loader interface, supports bundling through it's name option.
+
+## Code Splitting In React
+
+[https://gist.github.com/lencioni/643a78712337d255f5c031bfc81ca4cf](Airbnb example by Joe Lencioni)
+
+Other options:
+- [https://www.npmjs.com/package/react-async-component](react-async-components)
+- [https://www.npmjs.com/package/loadable-components](loadable-components)
 
