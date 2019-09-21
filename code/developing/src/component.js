@@ -1,4 +1,4 @@
-export default (text = "hello webpack") => {
+export default (text = HELLO) => {
   const container = document.createElement("div");
   const image = document.createElement("div");
   image.className = 'image'

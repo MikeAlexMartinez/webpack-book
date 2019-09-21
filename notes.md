@@ -878,7 +878,7 @@ word chunk.
 
 - [https://www.npmjs.com/package/bundle-loader](bundle-loader) gives similar results but through a loader interface, supports bundling through it's name option.
 
-## Code Splitting In React
+### Code Splitting In React
 
 [https://gist.github.com/lencioni/643a78712337d255f5c031bfc81ca4cf](Airbnb example by Joe Lencioni)
 
@@ -886,3 +886,395 @@ Other options:
 - [https://www.npmjs.com/package/react-async-component](react-async-components)
 - [https://www.npmjs.com/package/loadable-components](loadable-components)
 
+See loadable components info for more
+
+## Tidying Up
+
+To tidy up webpack between builds you could either schedule a 'rm -rf ./build && webpack' between builds or you can run an npm script to keep
+it cross platform. A task-runner could work for this purpose as well.
+
+### Setting Up [https://www.npmjs.com/package/clean-webpack-plugin](CleanWebpackPlugin)
+
+You can add this plugin to ensure that old / stale files don't stay in the build folder after newer builds are created.
+
+### Attaching a revision to the build
+
+Attaching info related to the current build can be useful for debugging purposes.
+[https://webpack.js.org/plugins/banner-plugin/](webpack.BannerPlugin) can support this and can be used alongside [https://www.npmjs.com/package/git-revision-webpack-plugin](git-revision-webpack-plugin) to generate a small comment at the beginning of the generated files.
+
+See code for examples.
+
+After building you will get a comment a the beginning of the file with version information etc. The banner can be adjusted by passing information
+revision information info webpack.DefinePlugin.
+
+### Copying Files
+
+Copying files is another ordinary operation you can handle with webpack. the [https://www.npmjs.com/package/copy-webpack-plugin](copy-webpack-plugin)
+can be handy if you need to bring in external files. [https://www.npmjs.com/package/cpy-cli](cpy-cli) is a good cross-platform way to copy files
+from outside of webpack.
+
+
+# Chapter 5 - Optimizing
+
+## Minifying
+
+Since webpack 4, production output gets minified using [https://www.npmjs.com/package/terser](terser) by default. Terser is ES2015+ comptible JS Minifier.
+
+### Minifying JS
+
+Minification involves safely rewriting code to make it more compact. e.g. will rename variables and remove unreachable blocks of code. Unsafe transformations
+can break code. e.g. Angular 1 parameter naming for modules.
+
+The JS minification process can be configured using the:
+- optimization.minimize (toggle) and
+- optimization.minimizer (configuration array)
+
+Other options for minification:
+- [https://www.npmjs.com/package/babel-minify-webpack-plugin](babel-minify-webpack-plugin) relies on [https://www.npmjs.com/package/babel-preset-minify](babel-present-minify) and is developed by the Babel team
+- [https://www.npmjs.com/package/webpack-closure-compiler](webpack-closure-compiler) runs parallel and can give smaller results than the babel option.
+- [https://www.npmjs.com/package/closure-webpack-plugin](closure-webpack-plugin) is another option
+- [https://www.npmjs.com/package/butternut-webpack-plugin](butternut-webpack-plugin) uses Rich Harris' experimental butternut minifier.
+
+### Speeding Up JS Execution
+
+There are a few techniques that are used to create code that will run faster.
+- Scope Hoisting: Hoists all modules to a single scope instead of writing separate closures for each. This slows the build
+  but speeds up execution.
+- Pre-evaluation: [https://www.npmjs.com/package/prepack-webpack-plugin](prepack-webpack-plugin) uses Prepack which rewrites computations that are able to
+be done at compile time. e.g. unrolling for loops and any functions that only return defined values. Other examples are: [https://www.npmjs.com/package/val-loader](val-loader) and [https://www.npmjs.com/package/babel-plugin-preval](babel-plugin-preval)
+- Improving Parsing: [https://www.npmjs.com/package/optimize-js-plugin](optimize-js-plugin) relies on optimize-js by Nolan Lawson.
+
+### Minifying Html
+
+If you consume HTML templates through [https://www.npmjs.com/package/html-loader](html-loader) your code you can use [https://www.npmjs.com/package/posthtml](posthtml) with [https://www.npmjs.com/package/posthtml-loader](posthtml-loader) and [https://www.npmjs.com/package/posthtml-minifier](posthtml-minifier) to minify your html.
+
+### Minifying CSS
+
+[https://www.npmjs.com/package/clean-css-loader](clean-css-loader) allows you to use a popular CSS minifier clean-css.
+
+[https://www.npmjs.com/package/optimize-css-assets-webpack-plugin](optimize-css-assets-webpack-plugin) is a plugin based option that applies a minifier on CSS assets. Using MiniCssExtractPlugin can lead to duplicated CSS given it only merges text chunks. OptimizeCSSAssetsPlugin avoid this problem by operating on the generated result.
+
+Of the CSS Minification options, OptimizeCSSAssetsPlugin composes the best. To use attached it and [http://cssnano.co/](cssnano).
+
+### Minifying Images
+
+Image size can be reduced using
+- [https://www.npmjs.com/package/img-loader](img-loader),
+- [https://www.npmjs.com/package/imagemin-webpack](imagemin-webpack) and
+- [https://www.npmjs.com/package/imagemin-webpack-plugin](imagemin-webpack-plugin). These packages use image optimizers underneath.
+
+It is advised to use cache-loader and thread-loader with these as discussed in the Performance chapter as they can be substantial operations.
+
+## Tree Shaking
+
+Tree Shaking is enabled by the ES2015 module definition. The idea is it's possible to analyze the module definition statically without running it, to tell
+which code is used and which isn't. Tree shaking can also work to an extent through [https://www.npmjs.com/package/webpack-common-shake](webpack-common-shake)
+which utilises the CommonJS module definition.
+
+Tree shaking identifies through the use of named imports and exports which code is and isn't used.
+
+There is a CSS Modules related tree-shaking. See [https://www.npmjs.com/package/purgecss](purgecss)
+
+### tree shaking on a package level.
+
+The same idea can work with dependencies that use the ES2015 module definition. Given the related packaging, standards are still emerging. Webpack attempts
+to resolve the package.json module field for this reason.
+
+To get the most out of tree shaking with external packages you have to use [https://www.npmjs.com/package/babel-plugin-transform-imports](babel-plugin-transform-imports) to rewrite impors so that they work with webpack's tree-shaking logic. See [https://github.com/webpack/webpack/issues/2867](Webpack's issue 2867) for more information.
+
+## Environment Variables
+
+Webpakcks DefinePlugin enables the replacing of free variables so that you can convert if (process.env.NODE_ENV === "development") kind of code to if (true) or if (false)
+depending on the environment.
+
+Using the DefinePlugin can bring down the size of your React production bulid somewhat as a result. Webpack 4 sets process.env.NODE_ENV based on the given mode. Elimination if the core idea of DefinePlugin and allows toggling. A minifier performs analysis on the code and is able to 'toggle' i.e. conditionally remove, entire portions of code.
+
+It's also possible to use babel to replace free variables.
+
+webpack can allow you to use the environment variables to export specific sections of a module.
+
+### Adding Hashes to Filenames
+
+Webpack provides placeholders for this purpose. String are used to attach specific info to the webpack output.
+
+- [id] - returns the chunk id
+- [path] - returns the file path
+- [name] - returns the filename
+- [ext] - returns the ext for most available fields
+- [hash] - return the build hash. If any portion of the build changes, this will change true.
+- [chunkhash] - returns entry chunk-specific hash. Each entry defined in config recieves a hash of it's own, therefore,
+  if the chunk changes, the hash will change as well.
+- [contenthash] - returns has based on content
+
+one should only use hash and chunkhash in production as it doesn't help much during development.
+
+You can slice hash and chunkhash likes follow: [chunkhash: 4] returns the first for chars of the hash.
+
+Adding hashes to filenames is the best way to invalidate a cache.
+
+[hash] is defined differently for file-loader than for the rest of webpack.
+
+If you used chunkhash for extracted CSS as well, this would lead to problems as the code points to the CSS through JavaScript bringing it
+to the same entry, That means if the application code or CSS changed, both would be invalidated. Therefore instead of hash you shoudl use 
+contenthash.
+
+## Separating a Manifest
+
+When webpack writes bundles, it maintains a manifest. You can find it in the generated vendor bundle. The manifest describes what files webpack should load.
+
+By extracting the manifest, it means if the src code changes, the manifest changing won't trigger a change in the vendor package.
+
+### Extracting a manifest 
+
+To extract a manifest define optimization.runtimeChunk as done in code example.
+
+As this is being used with HtmlWebpackPlugin, it's not required to add the reference in index.html ourselves.
+
+Some plugins allow you to inline the manifest plugin to prevent an additional request.
+- [https://www.npmjs.com/package/inline-manifest-webpack-plugin](inline-manifest-webpack-plugin)
+- [https://www.npmjs.com/package/html-webpack-inline-chunk-plugin](html-webpack-inline-chunk-plugin)
+- [https://www.npmjs.com/package/assets-webpack-plugin](assets-webpack-plugin)
+
+### Using Records
+
+Plugins such as the AggressiveSplittingPlugin use records to implement caching. The approaches discussed are still valid
+but records goes one step further.
+
+Records store module ids across separate builds. Problem is the file needs to be saved. By adding a recordsPath to the config,
+webpack writes the file and then is able to reference and rewrite the file on subsequent builds. Can be particularly valuable
+if you jabe a complicated setup and want to check the correct caching behaviour.
+
+## Build Analysis
+
+To get suitable output, you should tweak the configuration. By adding the json arg with a suitable output path, you can
+gain insight into your builds. These stats can be pushed through various tools to help you better assess and understand
+your output.
+
+Following flags are also useful:
+- --profile to capture timing related information
+- --progress to show how long webpack spent in different stages of the build.
+
+Stats can be captured through node. Since stats can contain errors, it's wise to handle those independently.
+
+```javascript
+const webpack = require('webpack')
+const config = require('./webpack.config.js')('production')
+
+webpack(config, (err, stats) => {
+  if (err) {
+    return console.error(err);
+  }
+
+  if (stats.hasErrors()) {
+    return console.error(stats.toString("errors-only"));
+  }
+
+  console.log(stats)
+});
+```
+
+If you want JSON output use stats.toJson(). to get verbose, use stats.toJson("verbose")
+
+to mimic --json flag use console.log(JSON.stringify(stats.toJson(), 2));
+
+Useful stats plugins are:
+- [https://www.npmjs.com/package/stats-webpack-plugin](stats-webpack-plugin)
+- [https://www.npmjs.com/package/webpack-stats-plugin](webpack-stats-plugin)
+
+### Webpack enables you to use a performance budget
+
+If budget is configured, and then is not met, the build is terminated.
+
+Useful tools:
+- [https://github.com/webpack/analyse](The Official Analyse tool)
+- [https://chrisbateman.github.io/webpack-visualizer/](Webpack Visualiser)
+- [https://www.npmjs.com/package/duplicate-package-checker-webpack-plugin](duplicate-package-checker-webpack-plugin) - warns if find dup packages.
+- [https://alexkuz.github.io/webpack-chart/](Webpack Chart)
+- [https://www.npmjs.com/package/webpack-unused](webpack-unused)
+- [https://www.npmjs.com/package/webpack-bundle-analyzer](webpack-bundle-analyzer) - This is a good one <-
+
+There are a range of tools for duplication analysis:
+- [https://www.npmjs.com/package/inspectpack](inspectpack)
+- [https://www.npmjs.com/package/bundle-duplicates-plugin](bundle-duplicates-plugin) - operates on a funciton level.
+- [https://www.npmjs.com/package/find-duplicate-dependencies](find-duplicate-dependencies) - operates on dependencies.
+- [https://www.npmjs.com/package/depcheck](depcheck) - check redundant or missing packages from project.
+- [https://www.npmjs.com/package/bundle-buddy](bundle-buddy) and [https://www.npmjs.com/package/bundle-buddy-webpack-plugin](bundle-buddy-webpack-plugin) allows
+  a user to find duplicates across bundles and can allow you to fine tune your splitting behaviour.
+
+## Performance
+
+Good ground rules when it comes to optimization:
+1. Know what to optimize.
+2. Perform fast to implement tweaks first.
+3. Perform more involved tweaks after.
+4. Measure impact.
+
+Optimizations come at a cost, make configuration harder to understand or tie it to a particular solution. Often the best optimization is to do
+less work or do it more smartly.
+
+### Measuring Impact
+
+Generating stats can be useful to measure build time. [https://www.npmjs.com/package/speed-measure-webpack-plugin](speed-measure-webpack-plugin) gives you
+more granular information per plugin and loader so you know which take the most time in your process.
+
+### High-Level Optimizations
+
+Webpack uses only a single instance by default meaning you aren't able to benefit from a multi-core processor without extra effort.
+- [https://www.npmjs.com/package/parallel-webpack](parallel-webpack)
+- [https://www.npmjs.com/package/happypack](HappyPack)
+
+### parallel webpack
+
+Assuming you have defined your config as an array, it can run configurations in parallel. It can also generate builds based on variants.
+
+Variants can be used to define feature flags etc. The underlying idea can be implemented using a worker-farm and parallel-webpack uses
+[https://www.npmjs.com/package/worker-farm](worker-farm) underneath.
+
+### HappyPack - File Level Parallelism
+
+HappyPack is more involved. It intercepts the loader calls that you specify and then runs them in parallel.
+
+it involves intercepting the babel-loader and then replacing babel-loader where it's called. generally this will
+result in coupling HappyPack within your configuration but this can be designed away if done so carefully.
+
+Low-level optimisations.
+- Consider using different source-maps during development.
+- Use @babel/present-env during dev instrad of source-maps to transpile fewer features for modern browsers.
+- Skip polyfills during development.
+- Disable portions of your code during development.
+- Polyfill less of Node. To disable entirely, set node to false directly. [https://webpack.js.org/configuration/node/](see webpack docs) for more information
+- Push bundles that change less to Dynamically Loaded Libraries (DLL) to avoid unecessary processing. see [https://github.com/webpack/webpack/tree/master/examples/dll-user](official webpack example)
+
+Plugin-Specific Optimizations
+- Utilizing caching through plugins like [https://www.npmjs.com/package/hard-source-webpack-plugin](hard-source-webpack-plugin) to avoid unnecessary work.
+- Use equivalent, but lighter alternatives, of plugins and loaders during development.
+
+Loader Specific Optimizations
+- Do less processing by skipping loaders during development.
+- Use either include or exclude with JS specific loaders.
+- Cache the results of expensive loaders. (image-manipulation)
+- Parallelize the execution of expensive loaders using thread-loader.
+
+### Optimizing Rebundling
+
+It's possible to optimise rebundling times during development by pointing the dev setup
+to a minified version of a library.
+
+module.noParse accepts a RegExp or an array of RegExps. In addition to telling webpack 
+not to parse the minified file you want to use, you also have to point react at the alias,
+by using resolve.alias.
+
+```javascript
+export.dontParse = ({ name, path }) => {
+  const alias = {};
+  alias[name] = path;
+
+  return {
+    module: {
+      noParse: [new RegExp(path)],
+    },
+    resolve: {
+      alias,
+    },
+  };
+};
+
+dontParse({
+  name: "react",
+  path: path.resolve(
+    __dirname, "node_modules/react/cjs/react.production.min.js",
+  ),
+}),
+```
+
+You could also ignore all minified files by passing the RegExp of /\.min\.js/ to the noParse arg.
+
+Not all modules support module.noParse.
+
+# Chapter 6
+
+## Build Targets
+
+Webpack's output target is controlled by the target field.
+
+### Web Targets
+
+Webpack targets the web by default. It bootstraps the application and loads it's modules.
+
+The initial load list of modules is maintained in the manifest and then the modules can load eachother as defined.
+
+### Web workers
+
+The web worker target wraps your application. Using web workers is valuable if you want to execute computation off of the main
+thread of the application without slowing the user interface.
+
+Limitations are:
+- You cannot use webpack's hashing features when the webworker target is used.
+- You cannot not mutate the DOM from a web worker.
+
+### Node Targets
+
+Webpack provides two node-specific targets, 'node' and 'async-node'. It used standard node require to load chunks
+unless async mode is used. In that case, it wraps modules so that they are loaded asynchronously through Node fs and vm modules.
+
+The main use case for using NOde target is Server Side Rendering (SSR).
+
+### Desktop Targets
+There are desktop shells such as NW (node-webkit) and Electron (prev. Atom). Webpack can target them as follows:
+- node-webkit - Targets NW while considered experimental
+- atom, electron, electron-main - Targets Electron main process.
+- electron-renderer - Targets Electron renderer process.
+
+[https://github.com/chentsulin/electron-react-boilerplate](electron-react-boilerplate) is a good starting point
+for electron and react development.
+
+## Multiple Pages
+
+it's possible to use webpack for multiple pages also. Similar to outputting multiple files in targets chapter. However
+to generate separate pages. It's achievable through HtmlWebpackPlugin and some config.
+
+Possible Approaches:
+- Go through multiple-compiler mode and return array of configs. Approach is minimal and effective if less need to share
+code between them. You can benefit through parallel webpack to improve build performance.
+- Set up single config and extract commonalities.
+- Follow idea of PWA, you can either have an app shell or a page shell and load portions of the app as it's used.
+
+### Generating Multiple Pages
+
+Abstracting Pages - To initialize a page, it should receive a page-title, output path, and an optional template at least.
+
+It can be modeled as a configuration part:
+
+```javascript
+/* webpack.parts.js */
+const HtmlWebpackPlugin = require('html-webpack-plugin');
+
+exports.page = ({
+  path = "",
+  template = require.resolve(
+    "html-webpack-plugin/default_index.ejs"
+  ),
+  title,
+} = {}) => ({
+  plugins: [
+    new HtmlWebpackPlugin({
+      filename: `${path && path + "/"}index.html`,
+      template,
+      title,
+    }),
+  ],
+});
+
+/* webpack.config.js */
+module.exports = mode => {
+  const pages = [
+    parts.page({ title: "Webpack demo" }),
+    parts.page({ title: "another demo", path: "another" })
+  ];
+
+  const config = mode === "production" ? productionConfig : developmentConfig;
+
+  return pages.map(page => merge(commonConfig, config, page, { mode }));
+}
+
+```

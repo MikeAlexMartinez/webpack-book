@@ -18,9 +18,36 @@ const commonConfig = merge([
     ],
   },
   parts.loadJavascript({ include: PATHS.app }),
+  parts.setFreeVariable("HELLO", "hello from config")
 ]);
 
 const productionConfig = merge([
+  {
+    performance: {
+      hints: "warning", // "error" or false are valid too
+      maxEntrypointSize: 50000, // in bytes, default 250k
+      maxAssetSize: 450000, // in bytes
+    },
+  },
+  {
+    output: {
+      chunkFilename: "[name].[chunkhash:4].js",
+      filename: "[name].[chunkhash:4].js",
+    },
+    recordsPath: path.join(__dirname, "records.json"),
+  },
+  parts.clean(PATHS.build),
+  parts.minifyJavascript(),
+  parts.minifyCSS({
+    options: {
+      discardComments: {
+        removeAll: true,
+      },
+      // Run cssnano in safe mode to avoid
+      // potentially unsafe transformations
+      safe: true,
+    },
+  }),
   // source-map is the slowest and highest quality option of them all.
   parts.generateSourceMaps({ type: "source-map" }),
   parts.extractCSS({
@@ -35,7 +62,7 @@ const productionConfig = merge([
   parts.loadImages({
     options: {
       limit: 5000,
-      name: "[name].[ext]"
+      name: "[name].[hash:4].[ext]"
     }
   }),
   {
@@ -53,8 +80,12 @@ const productionConfig = merge([
           },
         },
       },
+      runtimeChunk: {
+        name: "manifest",
+      },
     },
   },
+  parts.attachRevision()
 ]);
 
 const developmentConfig = merge([

@@ -1,5 +1,12 @@
+const webpack = require('webpack');
 const MiniCssExtractPlugin = require("mini-css-extract-plugin");
 const PurifyCSSPlugin = require("purifycss-webpack");
+const { CleanWebpackPlugin } = require("clean-webpack-plugin");
+const GitRevisionPlugin = require("git-revision-webpack-plugin");
+const TerserPlugin = require("terser-webpack-plugin");
+
+const OptimizeCSSAssetsPlugin = require("optimize-css-assets-webpack-plugin");
+const cssnano = require("cssnano");
 
 exports.loadImages = ({ include, exclude, options } = {}) => ({
   module: {
@@ -54,7 +61,7 @@ exports.loadCSS = ({ include, exclude } = {}) => ({
 exports.extractCSS = ({ include, exclude, use = [] }) => {
   // Output extracted CSS to a file
   const plugin = new MiniCssExtractPlugin({
-    filename: "[name].css",
+    filename: "[name].[contenthash:4].css",
   });
 
   return {
@@ -102,3 +109,40 @@ exports.loadJavascript = ({ include, exclude } = {}) => ({
   },
 });
 
+exports.clean = path => ({
+  plugins: [new CleanWebpackPlugin()],
+});
+
+exports.attachRevision = () => ({
+  plugins: [
+    new webpack.BannerPlugin({
+      banner: new GitRevisionPlugin().version(),
+    }),
+  ],
+});
+
+exports.minifyJavascript = () => ({
+  optimization: {
+    minimizer: [new TerserPlugin({ sourceMap: true })],
+  },
+});
+
+exports.minifyCSS =  ({ options }) => ({
+  plugins: [
+    new OptimizeCSSAssetsPlugin({
+      cssProcessor: cssnano,
+      cssProcessorOptions: options,
+      // should be set false if using --json output in build analysis
+      canPrint: false,
+    }),
+  ],
+});
+
+exports.setFreeVariable = (key, value) => {
+  const env = {};
+  env[key] = JSON.stringify(value);
+
+  return {
+    plugins: [new webpack.DefinePlugin(env)],
+  };
+};

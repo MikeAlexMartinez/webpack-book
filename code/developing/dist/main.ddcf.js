@@ -1,0 +1,3 @@
+/*! For license information please see main.ddcf.js.LICENSE */
+(window.webpackJsonp=window.webpackJsonp||[]).push([[0],{8:function(n,e,t){},9:function(n,e,t){"use strict";t.r(e);t(0),t(3),t(7),t(8);document.body.appendChild(function(){var n=arguments.length>0&&void 0!==arguments[0]?arguments[0]:"hello from config",e=document.createElement("div"),o=document.createElement("div");o.className="image";var c=document.createElement("div");return c.className="pure-button",c.innerHTML=n,c.onclick=function(){return t.e(3).then(t.bind(null,10)).then((function(n){c.textContent=n.default})).catch((function(n){console.error(n)}))},e.append(o,c),e}())}},[[9,1,2]]]);
+//# sourceMappingURL=main.ddcf.js.map
