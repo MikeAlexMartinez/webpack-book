@@ -75,16 +75,15 @@ const productionConfig = merge([
     optimization: {
       splitChunks: {
         // default
-        // chunks: "initial"
-
-        // explicit
-        cacheGroups: {
-          commons: {
-            test: /[\\/]node_modules[\\/]/,
-            name: "vendor",
-            chunks: "initial"
-          },
-        },
+        chunks: "initial",
+        // // explicit
+        // cacheGroups: {
+        //   commons: {
+        //     test: /[\\/]node_modules[\\/]/,
+        //     name: "vendor",
+        //     chunks: "initial"
+        //   },
+        // },
       },
       runtimeChunk: {
         name: "manifest",
@@ -123,6 +122,7 @@ module.exports = mode => {
       entry: {
         app: PATHS.app,
       },
+      chunks: ["app", "manifest", "vendors~app"],
     }),
     parts.page({
       title: "Another demo",
@@ -130,12 +130,13 @@ module.exports = mode => {
       entry: {
         another: path.join(PATHS.app, "another.js"),
       },
+      chunks: ["another", "manifest", "vendors~app"],
     }),
   ];
 
   const config = mode === "production" ? productionConfig : developmentConfig;
 
-  const configs = pages.map(page => merge(commonConfig, config, page, { mode }));
+  const configs = merge([commonConfig, config, { mode }].concat(pages));
   
   console.log(configs)
   return configs;
