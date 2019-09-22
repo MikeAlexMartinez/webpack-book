@@ -11,12 +11,18 @@ const PATHS = {
 
 const commonConfig = merge([
   {
-    plugins: [
-      new HtmlWebpackPlugin({
-        title: "Webpack demo",
-      }),
-    ],
+    output: {
+      // Needed for code splitting to work in nested paths
+      publicPath: "/"
+    },
   },
+  // {
+  //   plugins: [
+  //     new HtmlWebpackPlugin({
+  //       title: "Webpack demo",
+  //     }),
+  //   ],
+  // },
   parts.loadJavascript({ include: PATHS.app }),
   parts.setFreeVariable("HELLO", "hello from config")
 ]);
@@ -36,7 +42,7 @@ const productionConfig = merge([
     },
     recordsPath: path.join(__dirname, "records.json"),
   },
-  parts.clean(PATHS.build),
+  // parts.clean(PATHS.build),
   parts.minifyJavascript(),
   parts.minifyCSS({
     options: {
@@ -99,15 +105,40 @@ const developmentConfig = merge([
   parts.loadImages(),
 ]);
 
+// module.exports = mode => {
+//   // pass mode into babel configuration
+//   process.env.BABEL_ENV = mode;
+
+//   if (mode === 'production') {
+//     return merge(commonConfig, productionConfig, { mode });
+//   }
+
+//   return merge(commonConfig, developmentConfig, { mode });
+// };
+
 module.exports = mode => {
-  // pass mode into babel configuration
-  process.env.BABEL_ENV = mode;
+  const pages = [
+    parts.page({
+      title: "Webpack demo",
+      entry: {
+        app: PATHS.app,
+      },
+    }),
+    parts.page({
+      title: "Another demo",
+      path: "another",
+      entry: {
+        another: path.join(PATHS.app, "another.js"),
+      },
+    }),
+  ];
 
-  if (mode === 'production') {
-    return merge(commonConfig, productionConfig, { mode });
-  }
+  const config = mode === "production" ? productionConfig : developmentConfig;
 
-  return merge(commonConfig, developmentConfig, { mode });
+  const configs = pages.map(page => merge(commonConfig, config, page, { mode }));
+  
+  console.log(configs)
+  return configs;
 };
 
 // Traditional webpack config
