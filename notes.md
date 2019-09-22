@@ -1285,3 +1285,6 @@ It's possible to use webpack to compile a client-side build that then gets
 picked up by a server that renders it using React following the principle. 
 Prerendering is also an option with less-dynamic data.
 
+# Techniques
+
+## Dynamic Loading 
