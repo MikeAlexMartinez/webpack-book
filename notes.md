@@ -1287,4 +1287,84 @@ Prerendering is also an option with less-dynamic data.
 
 # Techniques
 
-## Dynamic Loading 
+## Dynamic Loading
+
+### Dynamic loading with require.context
+
+require.context provides a general form of code-splitting. 
+
+```javascript
+// Process pages through `yaml-frontmatter-loader` and `json-loader`.
+// The first one extracts the front matter and the body and the latter
+// converts it into a JSON structure to use later. Markdown
+// hasn't been processed yet.
+const req = require.context(
+  "json-loader!yaml-frontmatter-loader!./pages",
+  true, // Load files recursively. Pass false to skip recursion.
+  /^\.\/.*\.md$/ // Match files ending with .md.
+);
+```
+
+require.context returns a function to require against. It also knows it's
+module id and it provides a keys() method for figuring out the contents of
+the context. consider...
+
+```javascript
+req.keys(); // ["./demo.md", "./another-demo.md"]
+req.id; // 42
+
+// { title: "Demo", body: "# Demo page\nDemo Content\n\n" }
+const demoPage = req("./demo.md");
+```
+
+Technique can be valuable for testing or adding files for webpack to watch.
+
+### Dynamic paths with Dynamic import
+
+Instead of passing a complete path, you can pass a partial one. Webpack sets up a context internally. Here's a brief example:
+
+```javascript
+// Set up a target or derive this somehow
+const target = "fi"
+
+// Elsewhere in code
+import(`translations/${target}.json`).then(...).catch(...);
+```
+
+You should try to add file paths into dynamic imports to improve performance.
+
+### Combining Multiple require.contexts
+
+Multiple separate require.contexts can eb combined into one by wrapping them
+behind a function:
+
+```javascript
+const { concat, uniq } = require('lodash');
+
+const combineContexts = (...contexts) => {
+  function webpackContext(req) {
+    // find first match and execute
+    const matches = contexts
+      .map(context => context.keys().indexOf(req) >= 0 && context)
+      .filter(a => a);
+
+    return matches[0] && matches[0](req);
+  }
+
+  webpackContext.keys = () =>
+    uniq(
+      concat.apply(null, context.map(context => context.keys()))
+    );
+
+  return webpackContext;
+}
+```
+
+### Dealing with Dynamic Paths
+
+Given the approaches discussed here relay on static analysis and webpack
+has to find the files in question, it doesn't work for every possible use case. If files
+are on another server or accessed through an end point webpack may not be enough.
+
+In which case you can use side loaders such as [https://www.npmjs.com/package/scriptjs](scriptjs) or [https://www.npmjs.com/package/little-loader](little-loader).
+
