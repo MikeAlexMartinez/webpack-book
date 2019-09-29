@@ -1368,3 +1368,137 @@ are on another server or accessed through an end point webpack may not be enough
 
 In which case you can use side loaders such as [https://www.npmjs.com/package/scriptjs](scriptjs) or [https://www.npmjs.com/package/little-loader](little-loader).
 
+
+
+Skipping rest of techniques for now...
+
+
+# Chapter 8 - Extending
+
+The official documentation covers the [loader API](https://webpack.js.org/api/loaders) in detail.
+
+## Extending With Loaders
+
+### Debugging with loader-runner
+
+[loader-runner](https://www.npmjs.com/package/loader-runner) allows you to run loaders without
+webpack allowing you to learn more about loader development.
+
+```bash
+npm install loader-runner --save-dev
+```
+
+See code examples for more information.
+
+To pass a sourcemap to webpack, return as third parameter.
+
+### Returning Only Output
+
+You can give a loader a function that generates code dynamically.
+
+You can also return Buffer output, set module.exports.raw = true. The
+flag overwrites the default behaviour whihc expects a string is returned.
+
+### Writing Files
+
+Loaders, like file-loader, emit files. Webpack provides a single method, this.emitFile, for this. loader-runner does not implement this, you have to mock it.
+
+```javascript
+runLoaders(
+  {
+    resource: "./demo.txt",
+    loaders: [path.resolve(__dirname, "./loaders/demo-loader")],
+    context: {
+      emitFile: () => {},
+    },
+    readResource: fs.readFile.bind(fs),
+  },
+  (err, result) => (err ? console.error(err) : console.log(result))
+);
+```
+
+To impolement the idea of file-loader, you have to so two things: emit
+the file and return path to it. You could apply it as below:
+
+see loaders/demo-file-loader.js for an example.
+
+Webpack provides two additional emit methods:
+- this.emitWarning(\<string>)
+- this.emitError(\<string>)
+
+these calls should be preferred to console based alternatives. Again,
+to use with loader-runner, one must mock them.
+
+### Passing Options to Loaders
+
+the package loaderUtils can be utilised to retrieve any options passed to the loader.
+
+see examples...
+
+### Connecting custom loaders with Webpack
+
+To get the most out of loaders you can connect them with webpack.
+
+You can go through imports
+
+```javascript
+import "!../loaders/demo-loader?name=foo!./main.css";
+```
+
+Loader can be aliased instead as follows:
+
+```javascript
+const commonConfig = merge([
+  {
+    ...
+    resolveLoader: {
+      alias: {
+        "demo-loader": path.resolve(
+          __dirname,
+          "loaders/demo-loader.js"
+        ),
+      },
+    },
+  },
+  ...
+]);
+```
+
+which allows in file use to be simplified to:
+
+```javascript
+import "!demo-loader?name=foo!./main.css";
+```
+
+Once the loader is stable enough, set up a project based on
+webpack-defaults, push the logic there, and begin to consume the
+loader as a package.
+
+loader-runner is convenient for development but one should set up
+integration tests with webpack.
+
+### Pitch Loaders
+
+Webpack evaluates loaders in two phases: pitching and evaluating.
+Similar to 'capturing' and 'bubbling'. IDea is that webpack
+allows you to intercept execution during the pitching (capturing) 
+phase. It goes through the loaders left to right first and executes 
+them from right to left after that.
+
+for example:
+- style-loader ->  pitch  -> css-loader ->  pitch  -> postcss-loader
+- style-loader <- execute <- css-loader <- execute <- postcss-loader
+
+A pitch loader allows you to shape the request and even terminate it.
+
+### Caching With Loaders
+
+Although webpack caches loaders by default unless they set 
+this.cacheable(false), writing a cache demonstrates how loaders
+work together.
+
+See Cache loader example. Pitch loaders can then be used to attach
+metadata to the input to use later. In this example, a cache was 
+constructed during the pitching stage, and it was accessed during the 
+normal execution.
+
