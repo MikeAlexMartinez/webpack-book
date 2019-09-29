@@ -1502,3 +1502,62 @@ metadata to the input to use later. In this example, a cache was
 constructed during the pitching stage, and it was accessed during the 
 normal execution.
 
+
+## Extending With Plugins
+
+Plugins are are flexible than plugins and can work in tandem with
+loaders as MiniCssExtractPlugin shows.
+
+Plugins allow you to intercept webpack's execution through hooks.
+
+Webpack itself is a collection of plugins. Underneath it utilises
+[tapable](https://www.npmjs.com/package/tapable) plugin interface
+that allows webpack to apply plugins in different ways.
+
+You'll learn to apply plugins in different ways.
+
+Unlike loaders, there isn't a separate env against which you can run them, you need to use webpack itself. Although you an still push smaller pieces of logic outside of the webpack facing portion to allow
+for unit testing.
+
+### The basic slow of webpack plugins
+
+A webpack plugin should expose an `apply(compiler)` method. Javascript
+allows multiple ways to do this. You can define a function and attach
+methods to it's prototype or you can use the ES6 class syntax.
+
+One should declare a schema and communicate them to the user. [schema-utils](https://www.npmjs.com/package/schema-utils) works with loaders too.
+
+When a plugin is connected to the webpack configuration, webpack will run it's constructor and call apply with a compiler object passed to it. The object exposes webpack's plugin API and allows you to use it's
+hooks as listed by the [official compiler reference](https://webpack.js.org/api/plugins/compiler/)
+
+### Understanding Compiler and Compilation
+
+(see code examples)
+
+If you check [Webpacks plugin dev docs](https://webpack.js.org/api/plugins/) you'll see a compiler provides a large number of hooks. Each hook corresponds to a specific stage. For example, to emit files, you could listen to the emit event and then write.
+
+### Writing Files Through Compilation
+
+The assets object of compilation can be used for writing new files. You can also capture already created assets, manipulate them and write them back.
+
+To write an asset you need to use the [webpack-sources](https://www.npmjs.com/package/webpack-sources) file abstraction.
+
+`npm install webpack-sources --save-dev`
+
+### Managing Warnings and Errors
+
+Plugin execution can be caused to fail by throwing (throw new Error('message')).
+
+if you want to give the user a warning or an error message during compilation, you should use:
+- `compilation.warnings.push("warning");`
+- `compilation.warnings.push("error");`
+
+### Plugins can have Plugins.
+
+html-webpack-plugin uses plugins to extend itself for example.
+
+### Plugins can run compilers of Their own.
+
+Sometimes it makes sense to run a child compiler. e.g. [offline-plugin](https://www.npmjs.com/package/offline-plugin).
+See the idea explained by [Arthur Stolyar](https://stackoverflow.com/questions/38276028/webpack-child-compiler-change-configuration)
+
